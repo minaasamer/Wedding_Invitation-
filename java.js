@@ -724,11 +724,53 @@ async function capturePhoto() {
 window.addEventListener("load", () => {
 
     const delay = 5000;
-    const speed = 90; // pixels per second
+    const duration = 47000;
 
     let autoScrolling = false;
     let animationFrame = null;
     let lastTime = null;
+
+    setTimeout(() => {
+
+        autoScrolling = true;
+
+        const start = window.scrollY;
+        const target =
+            document.documentElement.scrollHeight -
+            window.innerHeight;
+
+        const distance = target - start;
+
+        function autoScroll(currentTime) {
+
+            if (!autoScrolling) return;
+
+            if (lastTime === null) {
+                lastTime = currentTime;
+            }
+
+            const delta = currentTime - lastTime;
+            lastTime = currentTime;
+
+            const speed = distance / duration;
+            const movement = speed * delta;
+
+            window.scrollBy(0, movement);
+
+            if (window.scrollY >= target - 1) {
+                autoScrolling = false;
+                return;
+            }
+
+            animationFrame =
+                requestAnimationFrame(autoScroll);
+        }
+
+        animationFrame =
+            requestAnimationFrame(autoScroll);
+
+    }, delay);
+
 
     function stopAutoScroll() {
 
@@ -742,68 +784,13 @@ window.addEventListener("load", () => {
         lastTime = null;
     }
 
-    function autoScroll(currentTime) {
 
-        if (!autoScrolling) return;
-
-        if (lastTime === null) {
-            lastTime = currentTime;
-        }
-
-        const deltaTime = currentTime - lastTime;
-        lastTime = currentTime;
-
-        const distance = speed * (deltaTime / 1000);
-
-        window.scrollBy(0, distance);
-
-        const maxScroll =
-            document.documentElement.scrollHeight -
-            window.innerHeight;
-
-        if (window.scrollY >= maxScroll - 1) {
-            stopAutoScroll();
-            return;
-        }
-
-        animationFrame = requestAnimationFrame(autoScroll);
-    }
-
-    setTimeout(() => {
-
-        if (window.scrollY > 10) return;
-
-        autoScrolling = true;
-        animationFrame = requestAnimationFrame(autoScroll);
-
-    }, delay);
-
-
-    // Stop when user interacts
     window.addEventListener("touchstart", stopAutoScroll, {
         passive: true
     });
 
     window.addEventListener("wheel", stopAutoScroll, {
         passive: true
-    });
-
-    window.addEventListener("keydown", (event) => {
-
-        const keys = [
-            "ArrowDown",
-            "ArrowUp",
-            "PageDown",
-            "PageUp",
-            "Home",
-            "End",
-            " "
-        ];
-
-        if (keys.includes(event.key)) {
-            stopAutoScroll();
-        }
-
     });
 
 });
