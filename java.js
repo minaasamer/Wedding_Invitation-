@@ -718,57 +718,104 @@ async function capturePhoto() {
   });
 
 })();
+// ================= AUTO SCROLL =================
+
 window.addEventListener("load", () => {
-    const delay = 5000;      
-    const duration = 46000;  
+
+    const delay = 5000;       
+    const duration = 46000;   
 
     let autoScrolling = false;
-    let animationFrame;
+    let animationFrame = null;
+    let startTime = null;
+    let startPosition = 0;
+    function stopAutoScroll() {
+        autoScrolling = false;
 
-    setTimeout(() => {
-        autoScrolling = true;
+        if (animationFrame !== null) {
+            cancelAnimationFrame(animationFrame);
+            animationFrame = null;
+        }
+    }
 
-        const start = window.scrollY;
-        const target = document.body.scrollHeight - window.innerHeight;
-        const startTime = performance.now();
+    function runAutoScroll(currentTime) {
 
-        function autoScroll(currentTime) {
-            if (!autoScrolling) return;
+        if (!autoScrolling) return;
 
-            const elapsed = currentTime - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-
-            window.scrollTo(
-                0,
-                start + (target - start) * progress
-            );
-
-            if (progress < 1) {
-                animationFrame = requestAnimationFrame(autoScroll);
-            } else {
-                autoScrolling = false;
-            }
+        if (startTime === null) {
+            startTime = currentTime;
         }
 
-        animationFrame = requestAnimationFrame(autoScroll);
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+
+        // Ease-in-out بسيط عشان الحركة تكون أنعم
+        const easedProgress =
+            progress < 0.5
+                ? 2 * progress * progress
+                : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+
+        const maxScroll =
+            document.documentElement.scrollHeight -
+            window.innerHeight;
+
+        const position =
+            startPosition +
+            (maxScroll - startPosition) * easedProgress;
+
+        window.scrollTo(0, position);
+
+        if (progress < 1) {
+            animationFrame = requestAnimationFrame(runAutoScroll);
+        } else {
+            stopAutoScroll();
+        }
+    }
+
+    setTimeout(() => {
+
+        // لو المستخدم بدأ يتفاعل قبل الـ auto-scroll
+        // ما نبدأش الحركة
+        if (window.scrollY > 10) return;
+
+        startPosition = window.scrollY;
+        startTime = null;
+        autoScrolling = true;
+
+        animationFrame = requestAnimationFrame(runAutoScroll);
 
     }, delay);
 
-    // إيقاف الـ Auto Scroll عند لمس الشاشة
-    window.addEventListener("touchstart", () => {
-        autoScrolling = false;
-        cancelAnimationFrame(animationFrame);
-    }, { passive: true });
 
-    // إيقافه لو المستخدم عمل Scroll بإيده
-    window.addEventListener("wheel", () => {
-        autoScrolling = false;
-        cancelAnimationFrame(animationFrame);
-    }, { passive: true });
+    // المستخدم لمس الشاشة
+    window.addEventListener("touchstart", stopAutoScroll, {
+        passive: true
+    });
 
-    window.addEventListener("scroll", () => {
-        if (!autoScrolling) {
-            cancelAnimationFrame(animationFrame);
+
+    // المستخدم استخدم الماوس
+    window.addEventListener("wheel", stopAutoScroll, {
+        passive: true
+    });
+
+
+    // المستخدم بدأ يستخدم الكيبورد
+    window.addEventListener("keydown", (event) => {
+
+        const scrollKeys = [
+            "ArrowDown",
+            "ArrowUp",
+            "PageDown",
+            "PageUp",
+            "Home",
+            "End",
+            " "
+        ];
+
+        if (scrollKeys.includes(event.key)) {
+            stopAutoScroll();
         }
-    }, { passive: true });
+
+    });
+
 });
