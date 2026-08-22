@@ -251,7 +251,7 @@ sections.forEach((section) => {
   const uploadProgressBar = document.getElementById("uploadProgressBar");
   const uploadProgressText = document.getElementById("uploadProgressText");
 
-  if (!cameraFab || !cameraModal) return;
+  if (!cameraModal) return;
 
   let cameraStream = null;
   let capturedBlob = null;
@@ -834,8 +834,6 @@ async function capturePhoto() {
       }
     }
   }
-
-  cameraFab.addEventListener("click", openCamera);
 
 const openCameraBtn = document.getElementById("openCameraBtn");
 
