@@ -724,7 +724,7 @@ async function capturePhoto() {
 window.addEventListener("load", () => {
 
     const delay = 5000;
-    const duration = 47000;
+    const duration = 30000;
 
     let autoScrolling = false;
     let animationFrame = null;
