@@ -722,7 +722,7 @@ async function capturePhoto() {
 window.addEventListener("load", () => {
 
     const delay = 5000;
-    const speed = 2; // pixels per tick
+    const speed = 5; // pixels per tick
     const interval = 30;
 
     let autoScrolling = false;
