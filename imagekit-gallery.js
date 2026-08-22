@@ -201,11 +201,17 @@ if (choosePhotoBtn && photoFileInput) {
         label.textContent = 'Uploading...';
       }
 
-      await window.uploadWeddingMemory(file, (progress) => {
-        console.log(
-          `Upload: ${Math.round(progress * 100)}%`
-        );
-      });
+      const watermarkedBlob =
+  await window.createWatermarkedMemoryFromFile(file);
+
+await window.uploadWeddingMemory(
+  watermarkedBlob,
+  (progress) => {
+    console.log(
+      `Upload: ${Math.round(progress * 100)}%`
+    );
+  }
+);
 
       if (label) {
         label.textContent = 'Uploaded ✓';

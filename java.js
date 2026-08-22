@@ -471,84 +471,241 @@ async function switchCameraDevice() {
 }
 
   // Canvas compression + watermark.
-  async function createCompressedMemory() {
+// =====================================================
+// IMAGE PROCESSING — COMPRESSION + WEDDING WATERMARK
+// =====================================================
 
-    if (!cameraVideo.videoWidth || !cameraVideo.videoHeight) {
+async function createWatermarkedMemory(source) {
+
+  let sourceWidth;
+  let sourceHeight;
+
+  // Camera video
+  if (source instanceof HTMLVideoElement) {
+
+    if (!source.videoWidth || !source.videoHeight) {
       throw new Error("CAMERA_NOT_READY");
     }
 
-    const maxWidth = 1440;
-    const scale = Math.min(1, maxWidth / cameraVideo.videoWidth);
+    sourceWidth = source.videoWidth;
+    sourceHeight = source.videoHeight;
 
-    const width = Math.round(cameraVideo.videoWidth * scale);
-    const height = Math.round(cameraVideo.videoHeight * scale);
+  }
 
-    cameraCanvas.width = width;
-    cameraCanvas.height = height;
+  // Uploaded image
+  else if (source instanceof HTMLImageElement) {
 
-    const ctx = cameraCanvas.getContext("2d", { alpha: false });
+    if (!source.naturalWidth || !source.naturalHeight) {
+      throw new Error("IMAGE_NOT_READY");
+    }
 
-    // Mirror is intentionally NOT applied: rear-camera memories stay natural.
-    ctx.drawImage(cameraVideo, 0, 0, width, height);
+    sourceWidth = source.naturalWidth;
+    sourceHeight = source.naturalHeight;
 
-    // Subtle dark gradient behind the watermark.
-    const gradientHeight = Math.round(height * 0.26);
-    const gradient = ctx.createLinearGradient(
-      0,
-      height / 2 - gradientHeight / 2,
-      0,
-      height / 2 + gradientHeight / 2
+  }
+
+  else {
+    throw new Error("INVALID_IMAGE_SOURCE");
+  }
+
+  const maxWidth = 1440;
+
+  const scale = Math.min(
+    1,
+    maxWidth / sourceWidth
+  );
+
+  const width = Math.round(sourceWidth * scale);
+  const height = Math.round(sourceHeight * scale);
+
+  cameraCanvas.width = width;
+  cameraCanvas.height = height;
+
+  const ctx = cameraCanvas.getContext(
+    "2d",
+    { alpha: false }
+  );
+
+  // Draw original image
+  ctx.drawImage(
+    source,
+    0,
+    0,
+    width,
+    height
+  );
+
+  // =====================================================
+  // WATERMARK BACKGROUND
+  // =====================================================
+
+  const gradientHeight = Math.round(height * 0.26);
+
+  const gradient = ctx.createLinearGradient(
+    0,
+    height / 2 - gradientHeight / 2,
+    0,
+    height / 2 + gradientHeight / 2
+  );
+
+  gradient.addColorStop(
+    0,
+    "rgba(0,0,0,0)"
+  );
+
+  gradient.addColorStop(
+    0.5,
+    "rgba(0,0,0,.16)"
+  );
+
+  gradient.addColorStop(
+    1,
+    "rgba(0,0,0,0)"
+  );
+
+  ctx.fillStyle = gradient;
+
+  ctx.fillRect(
+    0,
+    height / 2 - gradientHeight / 2,
+    width,
+    gradientHeight
+  );
+
+  // =====================================================
+  // WATERMARK TEXT
+  // =====================================================
+
+  const centerX = width / 2;
+  const centerY = height / 2;
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  ctx.shadowColor = "rgba(0,0,0,.8)";
+  ctx.shadowBlur = Math.max(
+    8,
+    width * .008
+  );
+
+  ctx.shadowOffsetY = 2;
+
+  // Names
+  const nameSize = Math.max(
+    42,
+    Math.round(width * .055)
+  );
+
+  ctx.font =
+    `400 ${nameSize}px "Great Vibes", "Brush Script MT", cursive`;
+
+  ctx.fillStyle =
+    "rgba(255,248,220,.94)";
+
+  ctx.fillText(
+    "Beshoy & Veronia",
+    centerX,
+    centerY
+  );
+
+  // Heart
+  ctx.shadowBlur = Math.max(
+    5,
+    width * .004
+  );
+
+  ctx.font =
+    `400 ${Math.max(26, Math.round(width * .026))}px "Cormorant Garamond", Georgia, serif`;
+
+  ctx.fillText(
+    "♡",
+    centerX,
+    centerY + nameSize * .72
+  );
+
+  // Date
+  ctx.shadowBlur = Math.max(
+    5,
+    width * .004
+  );
+
+  ctx.font =
+    `500 ${Math.max(14, Math.round(width * .012))}px Montserrat, Arial, sans-serif`;
+
+  ctx.letterSpacing = "4px";
+
+  ctx.fillText(
+    "08 • 09 • 2026",
+    centerX,
+    centerY + nameSize * 1.2
+  );
+
+  // =====================================================
+  // EXPORT JPEG
+  // =====================================================
+
+  return await new Promise((resolve, reject) => {
+
+    cameraCanvas.toBlob(
+      blob => {
+
+        if (!blob) {
+          reject(
+            new Error("COMPRESSION_FAILED")
+          );
+
+          return;
+        }
+
+        resolve(blob);
+
+      },
+      "image/jpeg",
+      0.82
     );
 
-    gradient.addColorStop(0, "rgba(0,0,0,0)");
-    gradient.addColorStop(.5, "rgba(0,0,0,.16)");
-    gradient.addColorStop(1, "rgba(0,0,0,0)");
+  });
+}
 
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, height / 2 - gradientHeight / 2, width, gradientHeight);
 
-    const centerX = width / 2;
-    const centerY = height / 2;
+// Camera shortcut
+async function createCompressedMemory() {
 
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.shadowColor = "rgba(0,0,0,.8)";
-    ctx.shadowBlur = Math.max(8, width * .008);
-    ctx.shadowOffsetY = 2;
+  return createWatermarkedMemory(
+    cameraVideo
+  );
 
-    const nameSize = Math.max(42, Math.round(width * .055));
-    ctx.font = `400 ${nameSize}px "Great Vibes", "Brush Script MT", cursive`;
-    ctx.fillStyle = "rgba(255,248,220,.94)";
-    ctx.fillText("Beshoy & Veronia", centerX, centerY);
+}
 
-    ctx.shadowBlur = Math.max(5, width * .004);
-    ctx.font = `400 ${Math.max(26, Math.round(width * .026))}px "Cormorant Garamond", Georgia, serif`;
-    ctx.fillText("♡", centerX, centerY + nameSize * .72);
 
-    ctx.shadowBlur = Math.max(5, width * .004);
-    ctx.font = `500 ${Math.max(14, Math.round(width * .012))}px Montserrat, Arial, sans-serif`;
-    ctx.letterSpacing = "4px";
-    ctx.fillText("08 • 09 • 2026", centerX, centerY + nameSize * 1.2);
+// Make it available to imagekit-gallery.js
+window.createWatermarkedMemoryFromFile = async function(file) {
 
-    return await new Promise((resolve, reject) => {
-
-      cameraCanvas.toBlob(
-        blob => {
-          if (!blob) {
-            reject(new Error("COMPRESSION_FAILED"));
-            return;
-          }
-
-          // JPEG quality is chosen to keep wedding memories visually good
-          // while keeping ImageKit storage usage controlled.
-          resolve(blob);
-        },
-        "image/jpeg",
-        0.82
-      );
-
-    });
+  if (!(file instanceof Blob)) {
+    throw new Error("INVALID_IMAGE_FILE");
   }
+
+  const image = new Image();
+
+  image.decoding = "async";
+
+  const objectUrl = URL.createObjectURL(file);
+
+  try {
+
+    image.src = objectUrl;
+
+    await image.decode();
+
+    return await createWatermarkedMemory(image);
+
+  } finally {
+
+    URL.revokeObjectURL(objectUrl);
+
+  }
+
+};
 
 async function capturePhoto() {
 
