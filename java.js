@@ -679,6 +679,12 @@ async function capturePhoto() {
   }
 
   cameraFab.addEventListener("click", openCamera);
+
+const openCameraBtn = document.getElementById("openCameraBtn");
+
+if (openCameraBtn) {
+  openCameraBtn.addEventListener("click", openCamera);
+}
   cameraClose.addEventListener("click", closeCamera);
   switchCamera.addEventListener("click", switchCameraDevice);
   captureBtn.addEventListener("click", capturePhoto);

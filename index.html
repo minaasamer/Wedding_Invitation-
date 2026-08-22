@@ -379,8 +379,30 @@
     <p class="section-text memories-intro">
       Capture a beautiful moment and share it with us.
     </p>
+    <div class="camera-actions">
 
+  <button class="camera-fab" id="openCameraBtn" type="button">
+    <span class="camera-fab-icon">
+      <i class="fa-solid fa-camera"></i>
+    </span>
+    <span class="camera-fab-label">Take Photo</span>
+  </button>
 
+  <button class="upload-photo-btn" id="choosePhotoBtn" type="button">
+    <span class="upload-photo-icon">
+      <i class="fa-solid fa-image"></i>
+    </span>
+    <span class="camera-fab-label">Choose Photo</span>
+  </button>
+
+  <input
+    type="file"
+    id="photoFileInput"
+    accept="image/*"
+    hidden
+  >
+
+</div>
     <div
       id="memoriesGallery"
       class="memories-gallery">
