@@ -170,3 +170,73 @@ window.uploadWeddingMemory = async function (blob, onProgress) {
 loadMemories().catch((error) => {
   console.error('ImageKit memories:', error);
 });
+const choosePhotoBtn = document.getElementById('choosePhotoBtn');
+const photoFileInput = document.getElementById('photoFileInput');
+
+if (choosePhotoBtn && photoFileInput) {
+
+  choosePhotoBtn.addEventListener('click', () => {
+    photoFileInput.click();
+  });
+
+  photoFileInput.addEventListener('change', async () => {
+
+    const file = photoFileInput.files?.[0];
+
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please choose an image.');
+      photoFileInput.value = '';
+      return;
+    }
+
+    try {
+      choosePhotoBtn.disabled = true;
+
+      const label =
+        choosePhotoBtn.querySelector('.camera-fab-label');
+
+      if (label) {
+        label.textContent = 'Uploading...';
+      }
+
+      await window.uploadWeddingMemory(file, (progress) => {
+        console.log(
+          `Upload: ${Math.round(progress * 100)}%`
+        );
+      });
+
+      if (label) {
+        label.textContent = 'Uploaded ✓';
+      }
+
+      setTimeout(() => {
+        if (label) {
+          label.textContent = 'Choose Photo';
+        }
+      }, 2000);
+
+    } catch (error) {
+
+      console.error('Choose photo upload:', error);
+
+      if (error.message === 'MEMORY_LIMIT_REACHED') {
+        alert('The wedding memory gallery is full.');
+      } else {
+        alert('Could not upload the photo. Please try again.');
+      }
+
+      const label =
+        choosePhotoBtn.querySelector('.camera-fab-label');
+
+      if (label) {
+        label.textContent = 'Choose Photo';
+      }
+
+    } finally {
+      choosePhotoBtn.disabled = false;
+      photoFileInput.value = '';
+    }
+  });
+}
