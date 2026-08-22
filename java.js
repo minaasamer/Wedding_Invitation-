@@ -718,3 +718,59 @@ async function capturePhoto() {
   });
 
 })();
+
+window.addEventListener("load", () => {
+
+    const delay = 5000;
+    const speed = 2; // pixels per tick
+    const interval = 30;
+
+    let autoScrolling = false;
+    let scrollTimer = null;
+
+    function stopAutoScroll() {
+        autoScrolling = false;
+
+        if (scrollTimer) {
+            clearInterval(scrollTimer);
+            scrollTimer = null;
+        }
+    }
+
+    setTimeout(() => {
+
+        if (window.scrollY > 10) return;
+
+        autoScrolling = true;
+
+        scrollTimer = setInterval(() => {
+
+            if (!autoScrolling) return;
+
+            const maxScroll =
+                document.documentElement.scrollHeight -
+                window.innerHeight;
+
+            if (window.scrollY >= maxScroll) {
+                stopAutoScroll();
+                return;
+            }
+
+            window.scrollBy(0, speed);
+
+        }, interval);
+
+    }, delay);
+
+
+    // المستخدم لمس الشاشة
+    window.addEventListener("touchstart", stopAutoScroll, {
+        passive: true
+    });
+
+    // المستخدم استخدم الماوس
+    window.addEventListener("wheel", stopAutoScroll, {
+        passive: true
+    });
+
+});
