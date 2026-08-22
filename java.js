@@ -719,56 +719,76 @@ async function capturePhoto() {
 
 })();
 
+// ================= AUTO SCROLL =================
+
 window.addEventListener("load", () => {
 
     const delay = 5000;
-    const speed = 5; // pixels per tick
-    const interval = 30;
+    const duration = 47000;
 
     let autoScrolling = false;
-    let scrollTimer = null;
-
-    function stopAutoScroll() {
-        autoScrolling = false;
-
-        if (scrollTimer) {
-            clearInterval(scrollTimer);
-            scrollTimer = null;
-        }
-    }
+    let animationFrame = null;
+    let lastTime = null;
 
     setTimeout(() => {
 
-        if (window.scrollY > 10) return;
-
         autoScrolling = true;
 
-        scrollTimer = setInterval(() => {
+        const start = window.scrollY;
+        const target =
+            document.documentElement.scrollHeight -
+            window.innerHeight;
+
+        const distance = target - start;
+
+        function autoScroll(currentTime) {
 
             if (!autoScrolling) return;
 
-            const maxScroll =
-                document.documentElement.scrollHeight -
-                window.innerHeight;
+            if (lastTime === null) {
+                lastTime = currentTime;
+            }
 
-            if (window.scrollY >= maxScroll) {
-                stopAutoScroll();
+            const delta = currentTime - lastTime;
+            lastTime = currentTime;
+
+            const speed = distance / duration;
+            const movement = speed * delta;
+
+            window.scrollBy(0, movement);
+
+            if (window.scrollY >= target - 1) {
+                autoScrolling = false;
                 return;
             }
 
-            window.scrollBy(0, speed);
+            animationFrame =
+                requestAnimationFrame(autoScroll);
+        }
 
-        }, interval);
+        animationFrame =
+            requestAnimationFrame(autoScroll);
 
     }, delay);
 
 
-    // المستخدم لمس الشاشة
+    function stopAutoScroll() {
+
+        autoScrolling = false;
+
+        if (animationFrame) {
+            cancelAnimationFrame(animationFrame);
+            animationFrame = null;
+        }
+
+        lastTime = null;
+    }
+
+
     window.addEventListener("touchstart", stopAutoScroll, {
         passive: true
     });
 
-    // المستخدم استخدم الماوس
     window.addEventListener("wheel", stopAutoScroll, {
         passive: true
     });
