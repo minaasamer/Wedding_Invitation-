@@ -1766,7 +1766,7 @@ body{
 
   /* HERO */
   .hero{
-    min-height:97vh;
+    min-height:95vh;
   }
   .hero h1{
     font-size: clamp(2.8rem, 17.92vw, 4.4rem);
